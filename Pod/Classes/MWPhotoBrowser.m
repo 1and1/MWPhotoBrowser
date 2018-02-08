@@ -512,7 +512,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 	_pagingScrollView.contentSize = [self contentSizeForPagingScrollView];
 	
 	// Adjust frames and configuration of each visible page
-	for (MWZoomingScrollView *page in _visiblePages) {
+    NSSet *copy = [_visiblePages copy];
+    for (MWZoomingScrollView *page in copy) {
         NSUInteger index = page.index;
 		page.frame = [self frameForPageAtIndex:index];
         if (page.captionView) {
@@ -783,7 +784,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 	
 	// Recycle no longer needed pages
     NSInteger pageIndex;
-	for (MWZoomingScrollView *page in _visiblePages) {
+    NSSet *copy = [_visiblePages copy];
+    for (MWZoomingScrollView *page in copy) {
         pageIndex = page.index;
 		if (pageIndex < (NSUInteger)iFirstIndex || pageIndex > (NSUInteger)iLastIndex) {
 			[_recycledPages addObject:page];
@@ -870,14 +872,17 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 }
 
 - (BOOL)isDisplayingPageForIndex:(NSUInteger)index {
-	for (MWZoomingScrollView *page in _visiblePages)
+    NSSet *copy = [_visiblePages copy];
+    for (MWZoomingScrollView *page in copy) {
 		if (page.index == index) return YES;
+    }
 	return NO;
 }
 
 - (MWZoomingScrollView *)pageDisplayedAtIndex:(NSUInteger)index {
 	MWZoomingScrollView *thePage = nil;
-	for (MWZoomingScrollView *page in _visiblePages) {
+    NSSet *copy = [_visiblePages copy];
+    for (MWZoomingScrollView *page in copy) {
 		if (page.index == index) {
 			thePage = page; break;
 		}
@@ -887,7 +892,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 
 - (MWZoomingScrollView *)pageDisplayingPhoto:(id<MWPhoto>)photo {
 	MWZoomingScrollView *thePage = nil;
-	for (MWZoomingScrollView *page in _visiblePages) {
+    NSSet *copy = [_visiblePages copy];
+    for (MWZoomingScrollView *page in copy) {
 		if (page.photo == photo) {
 			thePage = page; break;
 		}
@@ -1047,8 +1053,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
 	
     // Checks
-	if (!_viewIsActive || _performingLayout || _rotating) return;
-	
+    if (scrollView != _pagingScrollView || !_viewIsActive || _performingLayout || _rotating) return;
+
 	// Tile pages
 	[self tilePages];
 	
@@ -1154,7 +1160,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     UIButton *selectedButton = (UIButton *)sender;
     selectedButton.selected = !selectedButton.selected;
     NSUInteger index = NSUIntegerMax;
-    for (MWZoomingScrollView *page in _visiblePages) {
+    NSSet *copy = [_visiblePages copy];
+    for (MWZoomingScrollView *page in copy) {
         if (page.selectedButton == selectedButton) {
             index = page.index;
             break;
@@ -1180,7 +1187,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
 
 - (NSUInteger)indexForPlayButton:(UIView *)playButton {
     NSUInteger index = NSUIntegerMax;
-    for (MWZoomingScrollView *page in _visiblePages) {
+    NSSet *copy = [_visiblePages copy];
+    for (MWZoomingScrollView *page in copy) {
         if (page.playButton == playButton) {
             index = page.index;
             break;
@@ -1440,7 +1448,8 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         _toolbar.frame = CGRectOffset([self frameForToolbarAtOrientation:self.interfaceOrientation], 0, animatonOffset);
         
         // Captions
-        for (MWZoomingScrollView *page in _visiblePages) {
+        NSSet *copy = [_visiblePages copy];
+        for (MWZoomingScrollView *page in copy) {
             if (page.captionView) {
                 MWCaptionView *v = page.captionView;
                 // Pass any index, all we're interested in is the Y
@@ -1463,8 +1472,10 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         if (hidden) _toolbar.frame = CGRectOffset(_toolbar.frame, 0, animatonOffset);
         _toolbar.alpha = alpha;
 
+        NSSet *copy = [_visiblePages copy];
+        
         // Captions
-        for (MWZoomingScrollView *page in _visiblePages) {
+        for (MWZoomingScrollView *page in copy) {
             if (page.captionView) {
                 MWCaptionView *v = page.captionView;
                 // Pass any index, all we're interested in is the Y
@@ -1477,7 +1488,7 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
         }
         
         // Selected buttons
-        for (MWZoomingScrollView *page in _visiblePages) {
+        for (MWZoomingScrollView *page in copy) {
             if (page.selectedButton) {
                 UIButton *v = page.selectedButton;
                 CGRect newFrame = [self frameForSelectedButton:v atIndex:0];
