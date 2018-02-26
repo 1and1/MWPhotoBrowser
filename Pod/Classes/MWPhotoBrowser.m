@@ -12,6 +12,8 @@
 #import "MWPhotoBrowserPrivate.h"
 #import "SDImageCache.h"
 #import "UIImage+MWPhotoBrowser.h"
+@import JGProgressHUD;
+
 
 #define PADDING                  10
 
@@ -295,18 +297,6 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     
 }
 
-// Release any retained subviews of the main view.
-- (void)viewDidUnload {
-	_currentPageIndex = 0;
-    _pagingScrollView = nil;
-    _visiblePages = nil;
-    _recycledPages = nil;
-    _toolbar = nil;
-    _previousButton = nil;
-    _nextButton = nil;
-    _progressHUD = nil;
-    [super viewDidUnload];
-}
 
 - (BOOL)presentingViewControllerPrefersStatusBarHidden {
     UIViewController *presenting = self.presentingViewController;
@@ -1611,25 +1601,26 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
             self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil];
             
             // Show loading spinner after a couple of seconds
+            JGProgressHUD *progressHUD = [JGProgressHUD progressHUDWithStyle:JGProgressHUDStyleDark];
             double delayInSeconds = 2.0;
             dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
             dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
                 if (self.activityViewController) {
-                    [self showProgressHUDWithMessage:nil];
+                    [progressHUD showInView:self.view];
+                    self.navigationController.navigationBar.userInteractionEnabled = NO;
                 }
             });
 
             // Show
             typeof(self) __weak weakSelf = self;
-            [self.activityViewController setCompletionHandler:^(NSString *activityType, BOOL completed) {
+            [self.activityViewController setCompletionWithItemsHandler:^(UIActivityType  _Nullable activityType, BOOL completed, NSArray * _Nullable returnedItems, NSError * _Nullable activityError) {
                 weakSelf.activityViewController = nil;
                 [weakSelf hideControlsAfterDelay];
-                [weakSelf hideProgressHUD:YES];
+                [progressHUD dismiss];
+                weakSelf.navigationController.navigationBar.userInteractionEnabled = YES;
             }];
-            // iOS 8 - Set the Anchor Point for the popover
-            if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8")) {
-                self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
-            }
+            
+            self.activityViewController.popoverPresentationController.barButtonItem = _actionButton;
             [self presentViewController:self.activityViewController animated:YES completion:nil];
 
         }
@@ -1640,30 +1631,5 @@ static void * MWVideoPlayerObservation = &MWVideoPlayerObservation;
     }
     
 }
-
-#pragma mark - Action Progress
-
-- (MBProgressHUD *)progressHUD {
-    if (!_progressHUD) {
-        _progressHUD = [[MBProgressHUD alloc] initWithView:self.view];
-        _progressHUD.minSize = CGSizeMake(120, 120);
-        _progressHUD.minShowTime = 1;
-        [self.view addSubview:_progressHUD];
-    }
-    return _progressHUD;
-}
-
-- (void)showProgressHUDWithMessage:(NSString *)message {
-    self.progressHUD.labelText = message;
-    self.progressHUD.mode = MBProgressHUDModeIndeterminate;
-    [self.progressHUD show:YES];
-    self.navigationController.navigationBar.userInteractionEnabled = NO;
-}
-
-- (void)hideProgressHUD:(BOOL)animated {
-    [self.progressHUD hide:animated];
-    self.navigationController.navigationBar.userInteractionEnabled = YES;
-}
-
 
 @end

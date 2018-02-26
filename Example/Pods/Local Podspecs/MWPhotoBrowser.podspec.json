@@ -39,8 +39,8 @@
   ],
   "weak_frameworks": "Photos",
   "dependencies": {
-    "MBProgressHUD": [
-      "~> 0.9"
+    "JGProgressHUD": [
+
     ],
     "DACircularProgress": [
       "~> 2.3"
